@@ -676,7 +676,7 @@
     }
     function separate(block) {
       let pushed = false;
-      for (let n = 0; n < 8; n++) {
+      for (let n = 0; n < 24; n++) {
         let moved = false;
         for (const other of blocks) {
           if (other === block) continue;
@@ -685,7 +685,7 @@
           let dx = c.ma.cx - c.mb.cx;
           let dy = c.ma.cy - c.mb.cy;
           const len = Math.hypot(dx, dy) || 1;
-          const push = BRIDGE - c.mid + 0.8;
+          const push = BRIDGE - c.mid + 1.2;
           block.tx += (dx / len) * push;
           block.ty += (dy / len) * push;
           applyTransform(block);
@@ -773,7 +773,11 @@
         dragging.tx += (target.x - dragging.tx) * gain;
         dragging.ty += (target.y - dragging.ty) * gain;
         applyTransform(dragging);
-        if (separate(dragging)) corrected = true;
+        if (separate(dragging)) {
+          corrected = true;
+          target.x = dragging.tx;
+          target.y = dragging.ty;
+        }
         checkBowl(dragging);
       }
       if (returning) {
@@ -838,6 +842,7 @@
       if (!dragging) return;
       const block = dragging;
       dragging = null;
+      if (!cancel && separate(block)) corrected = true;
       if (cancel) {
         returning = { block, x: originTranslate.x, y: originTranslate.y };
         try { ensure().reject(); } catch (err) {}
