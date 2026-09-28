@@ -1,35 +1,65 @@
 # Tokens
 
-Derive every color from one paper hex. Components read variables. They do not invent hex values.
+The shader owns the garden's color. CSS variables are the fallback, the type, and the controls inside a stone. Components read variables. They do not invent a second palette beside `data-color`.
 
-## Dawn and dusk
+## Sand
 
-Dawn is the default. Dusk is the same light direction on a dark paper. Switch by setting `data-theme="dusk"` on the root. Do not invert shadows by hand.
+The page background is the unlit fallback. The drawn sand is the shader pair in [engine.md](engine.md).
 
-| Token | Dawn | Dusk | Role |
-| --- | --- | --- | --- |
-| `--paper` | `#e6dfd4` | `#2a2724` | Page and control fill |
-| `--highlight` | `#f7f3ec` | `#3a3632` | Top-left shadow |
-| `--shade` | `#c9bfb2` | `#161412` | Bottom-right shadow |
-| `--ink` | `#2c2824` | `#f3eee6` | Text, 7:1 on paper |
-| `--ink-soft` | `#4e4942` | `#c9c0b4` | Labels and kickers, at least 4.5:1 |
-| `--moss` | `#3e4a37` | `#c5d4b8` | Focus mark on sand |
-| `--stone` | `#5a6852` | `#8fa08a` | Readable stone fill |
-| `--stone-ink` | `#f4f1ea` | `#1c2118` | Text on `--stone`, at least 4.5:1 |
-| `--stone-highlight` | `#c5cebf` | `#a8b8a4` | Top-left light on the stone |
-| `--stone-shade` | `#3c4838` | `#1a1e18` | Bottom-right shade on the stone |
-| `--grove` | `#7f8f76` | `#3e4a3c` | Planted mass with little or no text |
+| Token | Value | Role |
+| --- | --- | --- |
+| `--sand` | `#dcd9d1` | Page background before WebGL, and the lost-context fallback |
+| `--sand-shade` | `rgb(179, 173, 166)` | Shader shade, `(0.70, 0.68, 0.65)` |
+| `--sand-highlight` | `rgb(255, 255, 250)` | Shader highlight, `(1.0, 1.0, 0.98)` |
+| `--ink` | `#2c2824` | Text on sand, about 10:1 on `--sand` |
+| `--ink-soft` | `#4e4942` | Kickers on sand, at least 4.5:1 |
 
-`--stone` (#5a6852) against `--stone-ink` is about 5.3:1. A lighter sage looks closer to a sunlit garden and fails that bar; darken the fill until the type passes, and keep titles at 18px or larger when you are near the floor. `--grove` is foliage. Do not set body text on it. A one-word label on a grove uses `--ink` only after you recheck contrast, otherwise leave it unlabeled.
+`--ink` on `--sand` is the 7:1 floor. There is no type on the ripples.
 
-## Derivation
+## Stones
 
-From paper HSL `(h, s, l)`:
+`data-color` is the rock. The reference hues are `#72826a` and `#8a9179`. Both fail 4.5:1 under `#f4f1ea` (about 3.6:1 and 2.9:1). Darken in the same hue until the type passes. The matching readable fills are `#64725d` and `#6a705d`, each about 4.5:1 against `--stone-ink`.
 
-- Dawn (`l >= 0.45`): highlight is `l + 0.10`, saturation pulled down slightly. Shade is `l - 0.14`. Ink is a warm near-black at lightness `0.16`. If ink-on-paper is under 7:1, push ink darker until it passes.
-- Dusk (`l < 0.45`): highlight is only a small step lighter (`l + 0.08`, capped near `0.22`). Shade is `l - 0.12`. Ink is warm off-white. If contrast is under 7:1, push ink lighter.
+| Token | Value | Role |
+| --- | --- | --- |
+| `--stone` | `#64725d` | Default `data-color` when a block does not name one |
+| `--stone-ink` | `#f4f1ea` | Text on a rock, at least 4.5:1 |
+| `--stone-sage` | `#6a705d` | Second rock, still dark enough for `--stone-ink` |
 
-Keep highlight and shade in the same hue family as paper. A blue shadow on a warm page breaks the material.
+A lighter hex from the reference is legal only on a rock with no text. Recheck before adding a label.
+
+Do not derive a highlight color and paint it as a gradient on the fill. The bevel is the shader's diffuse and rim.
+
+## Field
+
+These match the shader. Changing one without the others breaks the sand bridge or the moiré floor.
+
+| Token | Value | Role |
+| --- | --- | --- |
+| `--radius` | `0.45 × shorter half-side` | Squircle corner |
+| `--dent` | `0.08` and `0.04` of the shorter half-side | Sine and cosine amplitude |
+| `--smin` | `20px` | Polynomial smooth-minimum radius |
+| `--wave` | `36px` | Ripple period |
+| `--mask` | `12px` | Distance over which a groove fades in off the seam |
+| `--crevice` | `6px` | Ambient occlusion on the sand side of the seam. Stay in 6–10px |
+| `--bevel` | `20px` | Width of the inner rise |
+| `--elevation` | `3` | Height of the flat top, in the shader's units |
+| `--bridge` | `12px` | Minimum blended distance in a channel while dragging |
+| `--safe-y` | `3rem` | Safe-zone padding, block axis |
+| `--safe-x` | `2.5rem` | Safe-zone padding, inline axis |
+
+## Controls inside a stone
+
+Inset, lit from the top-left. Spread stays 0. This shadow lives on the control, inside the safe zone.
+
+```css
+--shadow-inset: inset 3px 3px 6px rgba(0, 0, 0, 0.15),
+                inset -2px -2px 4px rgba(255, 255, 255, 0.1);
+```
+
+A raised control, when inset is wrong for the action, uses a 3px pair: highlight toward the top-left, shade toward the bottom-right, blur twice the distance. It does not sit on the sand.
+
+## Contrast
 
 ```js
 function lin(c) {
@@ -43,96 +73,42 @@ function contrast(rgbA, rgbB) {
 }
 ```
 
-If the shade-to-paper or highlight-to-paper contrast is under 3:1, add a fallback edge:
+Run it on every `data-color` against `--stone-ink` before shipping the block.
 
-```css
-border: 1px solid color-mix(in srgb, var(--ink) 12%, transparent);
-```
+## Type
 
-## Shadow scale
-
-| Token | Value | Use |
-| --- | --- | --- |
-| `--dist-sm` | `6px` | Controls near 56px |
-| `--dist` | `10px` | Default orbs and wells |
-| `--dist-lg` | `16px` | The largest stone |
-| `--blur` | `calc(var(--dist) * 2)` | Always paired with the distance in use |
-| `--gap` | `72px` | Minimum daylight between stone outlines |
-| `--rake` | `10px` | Distance between grooves |
-| `--reach` | `150px` | How far a silhouette's echo travels |
-
-Hover multiplies distance by 1.3. Press uses the resting distance, inset. Spread stays 0. A non-zero spread reads as a sticker.
-
-Optional convex face, only on the primary stone, aligned with the light:
-
-```css
-background: linear-gradient(145deg, var(--highlight), var(--paper) 42%, var(--shade));
-```
-
-Flat `--paper` is the default. Skip the gradient on ordinary controls.
-
-## Space, radius, type
-
-Space follows a short Fibonacci set: `8, 13, 21, 34, 55, 89`. Group padding and the gap between satellites come from this set. The quiet region of a view is at least `89px` on desktop and `55px` on a narrow screen.
-
-Stone silhouettes come from the sdf in [contours.md](contours.md). Do not approximate them with a single `border-radius`. The gap between outlines is `--gap`, not the Fibonacci inset.
-
-Type:
-
-- Titles: `"Fraunces", "Iowan Old Style", Palatino, Georgia, serif`. Weight 460. Size `clamp(2rem, 4vw, 3.25rem)`. Sentence case.
-- UI: `"Outfit", system-ui, sans-serif`. Weight 300–420.
-- Kickers: UI face, 11–12px, `letter-spacing: 0.18em`, uppercase, `--ink-soft`.
-
-Selection: `background: color-mix(in srgb, var(--moss) 25%, var(--paper))`.
+UI face: system sans, the same stack as the reference (`-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`). Titles at `1.4rem`, weight 400. Task copy at `1rem`, weight 400. Sentence case.
 
 ## Theme shell
 
 ```css
 :root {
-  --paper: #e6dfd4;
-  --highlight: #f7f3ec;
-  --shade: #c9bfb2;
+  --sand: #dcd9d1;
   --ink: #2c2824;
   --ink-soft: #4e4942;
-  --moss: #3e4a37;
-  --stone: #5a6852;
+  --stone: #64725d;
+  --stone-sage: #6a705d;
   --stone-ink: #f4f1ea;
-  --stone-highlight: #c5cebf;
-  --stone-shade: #3c4838;
-  --grove: #7f8f76;
-  --gap: 72px;
-  --rake: 10px;
-  --reach: 150px;
-  --dist: 10px;
-  --blur: calc(var(--dist) * 2);
+  --safe-y: 3rem;
+  --safe-x: 2.5rem;
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-settle: cubic-bezier(0.4, 0, 0.2, 1);
   color: var(--ink);
-  background: var(--paper);
-}
-:root[data-theme="dusk"] {
-  --paper: #2a2724;
-  --highlight: #3a3632;
-  --shade: #161412;
-  --ink: #f3eee6;
-  --ink-soft: #c9c0b4;
-  --moss: #c5d4b8;
-  --stone: #8fa08a;
-  --stone-ink: #1c2118;
-  --stone-highlight: #a8b8a4;
-  --stone-shade: #1a1e18;
-  --grove: #3e4a3c;
+  background: var(--sand);
 }
 ```
+
+Dusk keeps the same light vector. Retune `--sand`, the shader shade and highlight, and every `data-color` together, then rerun contrast. Do not flip the light to the bottom-right.
 
 ## High contrast and forced colors
 
 ```css
 @media (prefers-contrast: more) {
-  :root { --shade: #8a7f72; --moss: #24301f; }
+  :root { --ink: #16130f; --stone: #3f4a3a; --stone-ink: #f7f4ee; }
 }
 @media (forced-colors: active) {
-  .raised, .pressed {
+  #glcanvas { display: none; }
+  .zen-block {
     background: Canvas;
     color: CanvasText;
     border: 1px solid ButtonText;

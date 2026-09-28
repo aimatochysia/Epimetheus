@@ -176,8 +176,8 @@ export function createSound(ctx) {
 | `airStart` | Drag threshold crossed (about 4px), once |
 | `airSpeed` | `pointermove` while dragging, with px/s since the previous event |
 | `airStop` | Included in `drop` and `reject` |
-| `drop` | Once, when two stones' warps first share a channel |
-| `reject` | Escape, or a release that had to be pushed back to `--gap` |
+| `drop` | Once, when the outline gap to a neighbor first falls below one ripple period (36px) and the sand bridge is still open |
+| `reject` | Escape, or a release that was pushed back to keep the sand bridge |
 
 Do not allocate noise buffers inside `pointermove`. `airSpeed` only retargets an existing gain.
 
