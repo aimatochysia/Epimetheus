@@ -1,4 +1,4 @@
-const DB = "epimetheus";
+const DB = "pallas-athena";
 const KEY_ID = "aes-gcm";
 const BOARD_ID = "main";
 

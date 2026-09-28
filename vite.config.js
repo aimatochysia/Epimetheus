@@ -9,8 +9,8 @@ export default defineConfig({
       registerType: "autoUpdate",
       includeAssets: ["favicon.svg"],
       manifest: {
-        name: "Epimetheus",
-        short_name: "Epimetheus",
+        name: "Pallas-Athena",
+        short_name: "Pallas-Athena",
         description: "A quiet board for work that can wait.",
         theme_color: "#dcd9d1",
         background_color: "#dcd9d1",

@@ -25,7 +25,7 @@ export function Header({ theme, onTheme }) {
   return (
     <header className="nav">
       <div className="brand nav-block">
-        <h1>Epimetheus</h1>
+        <h1>Pallas-Athena</h1>
         <p>A quiet board for work that can wait.</p>
       </div>
       <div className="nav-tools">

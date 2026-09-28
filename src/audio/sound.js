@@ -7,7 +7,7 @@ const LEVELS = [
   { id: "near", label: "Near", value: 0.85 },
 ];
 
-const STORAGE_KEY = "epimetheus-volume";
+const STORAGE_KEY = "pallas-athena-volume";
 
 function encodeWav(samples, sampleRate) {
   const buffer = new ArrayBuffer(44 + samples.length * 2);
