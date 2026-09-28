@@ -74,7 +74,7 @@ export function App() {
     document.documentElement.dataset.theme = theme;
     document.documentElement.classList.toggle("reduce", reduce);
     const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.setAttribute("content", theme === "dark" ? "#1c2430" : "#445244");
+    if (meta) meta.setAttribute("content", theme === "dark" ? "#14161b" : "#dcd9d1");
   }, [theme, reduce]);
 
   useEffect(() => {

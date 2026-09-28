@@ -44,7 +44,7 @@ Ma (間) is that band. Do not fill it with another object. Sound is synthesized,
 - One light. Highlights fall on the top-left of a ridge and on the lit inner bevel. Shade falls on the bottom-right.
 - No external drop shadow on a stone. Ground it with a crevice shadow a few pixels wide, exactly where the rock meets the sand, plus a soft inner darkening and a rim on the bevel.
 - Every CSS shadow is strictly inset. Stones, rounded containers, menus, and controls use `box-shadow` values that all begin with `inset`. An outer shadow, a drop shadow, a spread ring, and a raised neumorphic pair are not allowed.
-- A bar along the top of the screen, when its bottom edge is shaped, bows downward: the center of that edge sits lower than the corners. Do not cut inverted (concave) corners that lift the edge back up into the bar.
+- A top bar is a straight edge in the neumorphic surface color. Its title and its controls sit in the same rounded inset blocks as the board. Do not bow that edge, and do not cut inverted corners into it.
 - Content lives in the safe zone: `3rem` top and bottom, `2.5rem` left and right. Text, controls, and nested blocks stay inside that rectangle. The rectangle's corners sit inside the rock.
 - Controls inside the safe zone are inset into the stone. They do not use a high-contrast border.
 - Body text on a stone clears 4.5:1 against `data-color`. If the reference hue is too light, darken that hex in the same hue until it passes. Text on sand uses `--ink` and clears 7:1 against the sand fallback.
