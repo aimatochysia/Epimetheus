@@ -43,8 +43,10 @@ Ma (間) is that band. Do not fill it with another object. Sound is synthesized,
 - Space the ripples at the reference period. Tighter spacing moirés.
 - One light. Highlights fall on the top-left of a ridge and on the lit inner bevel. Shade falls on the bottom-right.
 - No external drop shadow on a stone. Ground it with a crevice shadow a few pixels wide, exactly where the rock meets the sand, plus a soft inner darkening and a rim on the bevel.
+- Every CSS shadow is strictly inset. Stones, rounded containers, menus, and controls use `box-shadow` values that all begin with `inset`. An outer shadow, a drop shadow, a spread ring, and a raised neumorphic pair are not allowed.
+- A bar along the top of the screen, when its bottom edge is shaped, bows downward: the center of that edge sits lower than the corners. Do not cut inverted (concave) corners that lift the edge back up into the bar.
 - Content lives in the safe zone: `3rem` top and bottom, `2.5rem` left and right. Text, controls, and nested blocks stay inside that rectangle. The rectangle's corners sit inside the rock.
-- Controls inside the safe zone are inset into the stone, or raised by a very small neumorphic pair. They do not use a high-contrast border.
+- Controls inside the safe zone are inset into the stone. They do not use a high-contrast border.
 - Body text on a stone clears 4.5:1 against `data-color`. If the reference hue is too light, darken that hex in the same hue until it passes. Text on sand uses `--ink` and clears 7:1 against the sand fallback.
 - Hover, press, and drag each have a visual and a cue. Drag holds one air voice.
 - A visible mute persists. `prefers-reduced-motion: reduce` drops inner transitions to 1ms and starts sound muted. The garden redraws once a block has stopped, not on each frame of the move.
@@ -91,7 +93,7 @@ Resume the context inside the first pointer or key handler. Route every cue thro
 
 - Rocks or ripples drawn in CSS, SVG strokes, or a 2D canvas.
 - A spiral, concentric decorative circles, or a goo filter welding the filled bodies together.
-- An external drop shadow under a stone, a glossy gradient, or a metallic highlight.
+- An external drop shadow, an outer `box-shadow`, a raised neumorphic pair, a glossy gradient, or a metallic highlight.
 - Ripples across the interior of a stone.
 - A second light direction.
 - A new `AudioContext` per cue, or audio before a user gesture.

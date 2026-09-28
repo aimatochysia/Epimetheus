@@ -6,8 +6,10 @@
   --ink-soft: #4e4942;
   --shade: #c8c3b8;
   --light: #f7f4ee;
-  --shadow: 10px 14px 24px #c5c0b5, -8px -8px 18px #f6f3ec, inset 0 1px 0 rgba(255, 255, 255, 0.55);
-  --shadow-hover: 14px 18px 30px #beb9ae, -10px -10px 20px #f8f5ef, inset 0 1px 0 rgba(255, 255, 255, 0.65);
+  --nav-bar: 76px;
+  --nav-lip: 28px;
+  --shadow: inset 5px 6px 12px #c4bfb4, inset -4px -4px 10px #f7f4ee;
+  --shadow-hover: inset 7px 8px 16px #b7b2a7, inset -3px -3px 8px #f8f5ef;
   --inset: inset 3px 3px 7px #c9c4ba, inset -2px -2px 5px #f6f3ec;
   --inset-deep: inset 4px 5px 10px #bdb8ae, inset -2px -2px 4px #f3efe6;
   --header: #445244;
@@ -30,8 +32,8 @@
   --ink-soft: #b7b1a6;
   --shade: #05060a;
   --light: #3a4150;
-  --shadow: 10px 14px 24px #000000, -6px -6px 16px #323846, inset 0 1px 0 rgba(255, 255, 255, 0.06);
-  --shadow-hover: 14px 18px 28px #000000, -8px -8px 18px #3d4554, inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  --shadow: inset 5px 6px 14px #05060a, inset -3px -3px 8px #343b4a;
+  --shadow-hover: inset 8px 9px 18px #000000, inset -2px -2px 6px #3d4554;
   --inset: inset 3px 3px 8px #05060a, inset -2px -2px 5px #323846;
   --inset-deep: inset 4px 5px 10px #000000, inset -1px -1px 3px #3a4150;
   --header: #1c2430;
@@ -55,7 +57,6 @@ button { cursor: pointer; }
 }
 
 .nav {
-  --bite: 28px;
   position: sticky;
   top: 0;
   z-index: 5;
@@ -63,20 +64,11 @@ button { cursor: pointer; }
   align-items: center;
   justify-content: space-between;
   gap: 24px;
-  height: 92px;
-  padding: 0 32px 14px;
+  height: calc(var(--nav-bar) + var(--nav-lip));
+  padding: 0 32px var(--nav-lip);
   background: var(--header);
   color: var(--header-ink);
-  -webkit-mask:
-    linear-gradient(#000, #000) top / 100% calc(100% - var(--bite)) no-repeat,
-    linear-gradient(#000, #000) bottom center / calc(100% - var(--bite) * 2) var(--bite) no-repeat,
-    radial-gradient(circle at 0 100%, transparent 27px, #000 28px) left bottom / var(--bite) var(--bite) no-repeat,
-    radial-gradient(circle at 100% 100%, transparent 27px, #000 28px) right bottom / var(--bite) var(--bite) no-repeat;
-  mask:
-    linear-gradient(#000, #000) top / 100% calc(100% - var(--bite)) no-repeat,
-    linear-gradient(#000, #000) bottom center / calc(100% - var(--bite) * 2) var(--bite) no-repeat,
-    radial-gradient(circle at 0 100%, transparent 27px, #000 28px) left bottom / var(--bite) var(--bite) no-repeat,
-    radial-gradient(circle at 100% 100%, transparent 27px, #000 28px) right bottom / var(--bite) var(--bite) no-repeat;
+  border-radius: 0 0 50% 50% / 0 0 var(--nav-lip) var(--nav-lip);
 }
 .nav :focus-visible { outline-color: var(--header-ink); }
 .brand { min-width: 0; }
@@ -153,7 +145,7 @@ button { cursor: pointer; }
   gap: 72px;
   width: max-content;
   min-width: 100%;
-  min-height: calc(100vh - 92px);
+  min-height: calc(100vh - var(--nav-bar) - var(--nav-lip));
   padding: 36px 40px 80px;
 }
 .column, .add-column {
@@ -353,20 +345,17 @@ button { cursor: pointer; }
 .hint { margin: 4px 0 0; color: var(--ink-soft); font-size: 0.85rem; }
 
 @keyframes arrive-glow {
-  0% { box-shadow: 0 0 0 0 rgba(198, 165, 106, 0.45), var(--shadow); }
+  0% { box-shadow: inset 0 0 0 3px rgba(198, 165, 106, 0.72), var(--shadow); }
   100% { box-shadow: var(--shadow); }
 }
 
 @media (max-width: 760px) {
   .nav {
     height: auto;
-    min-height: 92px;
+    min-height: calc(var(--nav-bar) + var(--nav-lip));
     flex-wrap: wrap;
     padding-top: 16px;
-    padding-bottom: 18px;
-    -webkit-mask: none;
-    mask: none;
-    border-radius: 0 0 28px 28px;
+    padding-bottom: var(--nav-lip);
   }
   .brand p { display: none; }
   .column, .add-column { width: min(320px, 86vw); flex-basis: min(320px, 86vw); }
@@ -385,7 +374,6 @@ button { cursor: pointer; }
     border: 1px solid ButtonText;
     box-shadow: none;
     forced-color-adjust: auto;
-    -webkit-mask: none;
-    mask: none;
+    border-radius: 0;
   }
 }

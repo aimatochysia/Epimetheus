@@ -66,7 +66,7 @@ They stay as they were. The block's own surface may follow the pointer. The topo
 
 ## Rounded containers
 
-A screen that asks for separate rounded containers, rather than organic stones, keeps those containers apart. Their rounded rectangles are the ripple outlines. The period, the smooth minimum, and the single top-left light stay as in [engine.md](engine.md). Nested rows sit inside a container and do not each cast a ripple. Those containers may carry a soft neumorphic pair, highlight toward the top-left and shade toward the bottom-right, because they are the UI surface rather than a garden stone. The ripple field still updates only after they have stopped moving.
+A screen that asks for separate rounded containers, rather than organic stones, keeps those containers apart. Their rounded rectangles are the ripple outlines. The period, the smooth minimum, and the single top-left light stay as in [engine.md](engine.md). Nested rows sit inside a container and do not each cast a ripple. Those containers use the same strictly inset shadow as the controls: a dark inset toward the top-left and a light inset toward the bottom-right. They do not carry an outer shadow. The ripple field still updates only after they have stopped moving.
 
 ## Reduced motion
 
