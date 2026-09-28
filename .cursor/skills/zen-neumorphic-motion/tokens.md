@@ -50,14 +50,14 @@ These match the shader. Changing one without the others breaks the sand bridge o
 
 ## Controls inside a stone
 
-Inset, lit from the top-left. Spread stays 0. This shadow lives on the control, inside the safe zone.
+Inset, lit from the top-left. Spread stays 0. This is the only shadow. Every `box-shadow` on a control, a rounded container, a menu, or a stone begins with `inset`. There is no outer shadow and no raised pair.
 
 ```css
 --shadow-inset: inset 3px 3px 6px rgba(0, 0, 0, 0.15),
                 inset -2px -2px 4px rgba(255, 255, 255, 0.1);
 ```
 
-A raised control, when inset is wrong for the action, uses a 3px pair: highlight toward the top-left, shade toward the bottom-right, blur twice the distance. It does not sit on the sand.
+Pressing deepens the same inset. It does not add a second, outer layer. Hover darkens the inset fill. A completion glow, if one is needed, is an inset ring.
 
 ## Contrast
 

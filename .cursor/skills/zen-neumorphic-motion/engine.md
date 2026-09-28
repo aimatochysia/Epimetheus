@@ -199,7 +199,7 @@ These are DOM, painted over the rock, inside the safe zone. They are not in the 
 }
 ```
 
-A header divider, if one is needed, is at most `1px` at 20% white. Prefer the inset card. A control that is gently raised uses a 3px neumorphic pair with spread 0, and that shadow must die inside the safe zone so it never falls on the sand.
+A header divider, if one is needed, is at most `1px` at 20% white. Prefer the inset card. Shadows on controls and on rounded containers are strictly inset. Do not add an outer shadow, a drop shadow, or a raised neumorphic pair. A bar's bottom edge, when shaped, bows down so the center is lower than the corners. Inverted corners that curve back up into the bar are not used.
 
 ## Forced colors
 
