@@ -12,7 +12,7 @@ export default defineConfig({
         name: "Epimetheus",
         short_name: "Epimetheus",
         description: "A quiet board for work that can wait.",
-        theme_color: "#445244",
+        theme_color: "#dcd9d1",
         background_color: "#dcd9d1",
         display: "standalone",
         start_url: "/",

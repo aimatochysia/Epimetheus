@@ -37,7 +37,6 @@
     }
     .ui-layer { position: relative; z-index: 1; }
     .nav {
-      --lip: 28px;
       position: sticky;
       top: 0;
       z-index: 5;
@@ -45,11 +44,11 @@
       align-items: center;
       justify-content: space-between;
       gap: 24px;
-      height: calc(76px + var(--lip));
-      padding: 0 36px var(--lip);
+      min-height: 76px;
+      padding: 12px 36px;
       background: var(--nav);
       color: var(--stone-ink);
-      border-radius: 0 0 50% 50% / 0 0 var(--lip) var(--lip);
+      border-radius: 0;
     }
     .brand { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
     .brand h1 { margin: 0; font-size: 1.4rem; font-weight: 400; letter-spacing: -0.02em; }
@@ -211,7 +210,7 @@
     @media (max-width: 980px) {
       .plan-row { flex-direction: column; align-items: center; }
       .plan:nth-child(2) { margin-top: 0; }
-      .nav { height: auto; min-height: calc(76px + var(--lip)); padding-top: 16px; padding-bottom: var(--lip); flex-wrap: wrap; }
+      .nav { height: auto; padding-top: 16px; padding-bottom: 16px; flex-wrap: wrap; }
     }
   </style>
 </head>

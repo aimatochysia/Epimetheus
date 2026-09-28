@@ -24,14 +24,14 @@ export function Header({ theme, onTheme }) {
 
   return (
     <header className="nav">
-      <div className="brand">
+      <div className="brand nav-block">
         <h1>Epimetheus</h1>
         <p>A quiet board for work that can wait.</p>
       </div>
       <div className="nav-tools">
         <button
           type="button"
-          className="tool"
+          className="tool nav-block"
           aria-pressed={theme === "dark"}
           onPointerEnter={() => sound.hover()}
           onClick={() => {
@@ -44,7 +44,7 @@ export function Header({ theme, onTheme }) {
         <div className="menu" ref={menuRef}>
           <button
             type="button"
-            className="tool"
+            className="tool nav-block"
             aria-expanded={open}
             aria-haspopup="listbox"
             onPointerEnter={() => sound.hover()}
@@ -73,12 +73,12 @@ export function Header({ theme, onTheme }) {
             </ul>
           )}
         </div>
-        <button type="button" className="tool" onPointerEnter={() => sound.hover()} onClick={() => api.exportBoard()}>
+        <button type="button" className="tool nav-block" onPointerEnter={() => sound.hover()} onClick={() => api.exportBoard()}>
           Export
         </button>
         <button
           type="button"
-          className="tool"
+          className="tool nav-block"
           onPointerEnter={() => sound.hover()}
           onClick={() => fileRef.current?.click()}
         >

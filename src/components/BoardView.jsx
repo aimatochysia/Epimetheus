@@ -68,6 +68,7 @@ export function BoardView({ boardRef, reduce }) {
           <button
             type="button"
             className="add-column"
+            data-ripple
             onPointerEnter={() => sound.hover()}
             onClick={() => api.addColumn()}
           >
