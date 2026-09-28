@@ -191,6 +191,8 @@ let muted = stored ? stored === "off" : reduce;
 
 Call `setMuted(muted)` after the context exists. Write storage only in the switch handler, so a person who never touches it still follows the system motion setting.
 
+Declare the player as `let sound = null` before any function that reads it. A later `let sound` is in the temporal dead zone, so `if (sound)` throws and the rest of the script never binds the gestures.
+
 ## Leave out
 
 - A cue on scroll, on type, or on every focus change during keyboard navigation.
