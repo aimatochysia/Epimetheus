@@ -137,7 +137,7 @@ export function BoardProvider({ children }) {
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = "epimetheus-board.json";
+      link.download = "pallas-athena-board.json";
       link.click();
       URL.revokeObjectURL(url);
       setMessage("Board exported.");

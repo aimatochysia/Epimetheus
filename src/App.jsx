@@ -88,7 +88,7 @@ export function App() {
   }, []);
 
   function onTheme(next) {
-    localStorage.setItem("epimetheus-theme", next);
+    localStorage.setItem("pallas-athena-theme", next);
     setTheme(next);
   }
 
