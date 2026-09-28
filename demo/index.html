@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Epimetheus</title>
+  <style>
+    :root {
+      --sand: #dcd9d1;
+      --ink: #2c2824;
+      --ink-soft: #4e4942;
+      --stone: #64725d;
+      --stone-sage: #6a705d;
+      --stone-deep: #5a6852;
+      --stone-ink: #f4f1ea;
+      --nav: #445244;
+      --safe-y: 3rem;
+      --safe-x: 2.5rem;
+      --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+      --ease-settle: cubic-bezier(0.4, 0, 0.2, 1);
+      --shadow-inset: inset 3px 3px 6px rgba(0, 0, 0, 0.15), inset -2px -2px 4px rgba(255, 255, 255, 0.1);
+      color: var(--ink);
+      background: var(--sand);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-weight: 400;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; background: var(--sand); }
+    body { overflow-x: hidden; }
+    #glcanvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      pointer-events: none;
+    }
+    .ui-layer { position: relative; z-index: 1; }
+    .nav {
+      --bite: 28px;
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      height: 92px;
+      padding: 0 36px 12px;
+      background: var(--nav);
+      color: var(--stone-ink);
+      -webkit-mask:
+        linear-gradient(#000, #000) top / 100% calc(100% - var(--bite)) no-repeat,
+        linear-gradient(#000, #000) bottom center / calc(100% - var(--bite) * 2) var(--bite) no-repeat,
+        radial-gradient(circle at 0 100%, transparent 27px, #000 28px) left bottom / var(--bite) var(--bite) no-repeat,
+        radial-gradient(circle at 100% 100%, transparent 27px, #000 28px) right bottom / var(--bite) var(--bite) no-repeat;
+      mask:
+        linear-gradient(#000, #000) top / 100% calc(100% - var(--bite)) no-repeat,
+        linear-gradient(#000, #000) bottom center / calc(100% - var(--bite) * 2) var(--bite) no-repeat,
+        radial-gradient(circle at 0 100%, transparent 27px, #000 28px) left bottom / var(--bite) var(--bite) no-repeat,
+        radial-gradient(circle at 100% 100%, transparent 27px, #000 28px) right bottom / var(--bite) var(--bite) no-repeat;
+    }
+    .brand { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+    .brand h1 { margin: 0; font-size: 1.4rem; font-weight: 400; letter-spacing: -0.02em; }
+    .brand p { margin: 0; font-size: 0.92rem; }
+    .nav-tools { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; justify-content: flex-end; }
+    .nav a {
+      color: var(--stone-ink);
+      text-decoration: none;
+      font-size: 1rem;
+    }
+    .nav a:hover { text-decoration: underline; text-underline-offset: 4px; }
+    .cadence, .mute, .control, .field input, .field textarea {
+      font: inherit;
+      color: var(--stone-ink);
+    }
+    .cadence {
+      display: flex;
+      gap: 8px;
+      padding: 6px;
+      border-radius: 999px;
+      background: rgba(0, 0, 0, 0.15);
+      box-shadow: var(--shadow-inset);
+    }
+    .cadence button, .mute, .control {
+      border: 0;
+      cursor: pointer;
+      background: rgba(0, 0, 0, 0.12);
+      color: var(--stone-ink);
+      box-shadow: var(--shadow-inset);
+      transition: background 200ms var(--ease-out);
+    }
+    .cadence button {
+      border-radius: 999px;
+      padding: 8px 14px;
+    }
+    .cadence button[aria-pressed="true"] { background: rgba(0, 0, 0, 0.28); }
+    .cadence button:hover, .mute:hover, .control:hover { background: rgba(0, 0, 0, 0.22); }
+    .cadence button:active, .mute:active, .control:active, .field input:active, .field textarea:active {
+      box-shadow: inset 4px 4px 8px rgba(0, 0, 0, 0.22), inset -1px -1px 3px rgba(255, 255, 255, 0.08);
+    }
+    .mute {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border-radius: 999px;
+      padding: 8px 12px;
+    }
+    .mute-mark {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      border: 2px solid currentColor;
+      box-sizing: border-box;
+    }
+    .mute[aria-checked="false"] .mute-mark { border-top-color: transparent; }
+    .nav a:focus-visible, .cadence button:focus-visible, .mute:focus-visible,
+    .control:focus-visible, .field input:focus-visible, .field textarea:focus-visible,
+    .zen-block:focus-visible {
+      outline: 2px solid var(--stone-ink);
+      outline-offset: 3px;
+    }
+    main { padding: 72px 0 96px; }
+    .steps {
+      width: min(1080px, calc(100% - 64px));
+      margin: 0 auto 120px;
+      display: flex;
+      flex-direction: column;
+      gap: 112px;
+    }
+    .plan-row {
+      width: min(1100px, calc(100% - 48px));
+      margin: 0 auto 140px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      gap: 40px;
+    }
+    .plan:nth-child(2) { margin-top: 64px; }
+    .contact-wrap { display: flex; justify-content: center; padding: 0 24px; }
+    .zen-block {
+      position: relative;
+      background: transparent;
+      border: 0;
+      box-shadow: none;
+      color: var(--stone-ink);
+      touch-action: none;
+      cursor: grab;
+      user-select: none;
+    }
+    .zen-block:active { cursor: grabbing; }
+    .zen-block input, .zen-block textarea { user-select: text; cursor: text; }
+    .step { width: 400px; height: 280px; }
+    .step:nth-child(odd) { margin-right: auto; }
+    .step:nth-child(even) { margin-left: auto; }
+    .plan { width: 300px; height: 500px; }
+    .contact { width: 320px; height: 560px; }
+    .safe-zone {
+      box-sizing: border-box;
+      width: 100%;
+      height: 100%;
+      padding: var(--safe-y) var(--safe-x);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .kicker {
+      margin: 0;
+      font-size: 0.78rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+    .safe-zone h2 { margin: 0; font-size: 1.4rem; font-weight: 400; letter-spacing: -0.02em; }
+    .safe-zone p { margin: 0; font-size: 1rem; line-height: 1.45; }
+    .price { display: flex; align-items: baseline; gap: 8px; }
+    .price strong { font-size: 2rem; font-weight: 400; }
+    .features { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+    .features li, .control {
+      border-radius: 12px;
+      background: rgba(0, 0, 0, 0.1);
+      box-shadow: var(--shadow-inset);
+    }
+    .features li { padding: 10px 12px; font-size: 1rem; }
+    .control { margin-top: auto; padding: 12px 14px; text-align: center; }
+    .field { display: flex; flex-direction: column; gap: 6px; font-size: 1rem; }
+    .field input, .field textarea {
+      width: 100%;
+      border: 0;
+      border-radius: 12px;
+      background: rgba(0, 0, 0, 0.1);
+      box-shadow: var(--shadow-inset);
+      padding: 12px 14px;
+      transition: background 200ms var(--ease-out);
+    }
+    .field textarea { min-height: 96px; resize: none; }
+    .field input:hover, .field textarea:hover { background: rgba(0, 0, 0, 0.15); }
+    .live {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+    }
+    .no-gl .zen-block { background: var(--stone); }
+    @media (prefers-reduced-motion: reduce) {
+      .cadence button, .mute, .control, .field input, .field textarea { transition-duration: 1ms; }
+    }
+    @media (prefers-contrast: more) {
+      :root { --ink: #16130f; --stone: #3f4a3a; --stone-ink: #f7f4ee; --nav: #2c3828; }
+    }
+    @media (forced-colors: active) {
+      #glcanvas { display: none; }
+      .zen-block {
+        background: Canvas;
+        color: CanvasText;
+        border: 1px solid ButtonText;
+      }
+      .nav { background: Canvas; color: CanvasText; }
+    }
+    @media (max-width: 980px) {
+      .plan-row { flex-direction: column; align-items: center; }
+      .plan:nth-child(2) { margin-top: 0; }
+      .nav { height: auto; min-height: 92px; padding-top: 16px; flex-wrap: wrap; }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="glcanvas"></canvas>
+  <div class="ui-layer">
+    <header class="nav">
+      <div class="brand">
+        <h1>Epimetheus</h1>
+        <p>A quiet board for work that can wait.</p>
+      </div>
+      <div class="nav-tools">
+        <a href="#steps">Steps</a>
+        <a href="#plans">Plans</a>
+        <a href="#contact">Contact</a>
+        <div class="cadence" role="group" aria-label="Billing period">
+          <button type="button" data-period="month" aria-pressed="true">Monthly</button>
+          <button type="button" data-period="year" aria-pressed="false">Yearly</button>
+        </div>
+        <button class="mute" type="button" role="switch" aria-checked="true">
+          <span class="mute-mark" aria-hidden="true"></span>
+          <span class="mute-label">Sound</span>
+        </button>
+      </div>
+    </header>
+
+    <main>
+      <section class="steps" id="steps" aria-label="Steps">
+        <article class="zen-block kanban-node step" tabindex="0" data-color="#64725d" data-id="name">
+          <div class="safe-zone">
+            <p class="kicker">01</p>
+            <h2>Name the board</h2>
+            <p>Give the work a single place to rest.</p>
+          </div>
+        </article>
+        <article class="zen-block kanban-node step" tabindex="0" data-color="#6a705d" data-id="card">
+          <div class="safe-zone">
+            <p class="kicker">02</p>
+            <h2>Drop a card</h2>
+            <p>Three lines are enough to begin.</p>
+          </div>
+        </article>
+        <article class="zen-block kanban-node step" tabindex="0" data-color="#5a6852" data-id="still">
+          <div class="safe-zone">
+            <p class="kicker">03</p>
+            <h2>Step away</h2>
+            <p>The board keeps its shape when you look away.</p>
+          </div>
+        </article>
+      </section>
+
+      <section id="plans" aria-label="Plans">
+        <div class="plan-row">
+          <article class="zen-block kanban-node plan" tabindex="0" data-color="#64725d" data-id="plot">
+            <div class="safe-zone">
+              <p class="kicker">Plot</p>
+              <h2>For one person</h2>
+              <p class="price"><strong data-month="0" data-year="0">$0</strong> <span class="unit">a month</span></p>
+              <ul class="features">
+                <li>One quiet board</li>
+                <li>Cards stay with you</li>
+                <li>No infrastructure</li>
+              </ul>
+              <button class="control" type="button">Choose Plot</button>
+            </div>
+          </article>
+          <article class="zen-block kanban-node plan" tabindex="0" data-color="#5a6852" data-id="bench">
+            <div class="safe-zone">
+              <p class="kicker">Bench</p>
+              <h2>For a small group</h2>
+              <p class="price"><strong data-month="12" data-year="9">$12</strong> <span class="unit">a month</span></p>
+              <ul class="features">
+                <li>Shared benches</li>
+                <li>A handful of boards</li>
+                <li>Yearly bill, if you want it</li>
+              </ul>
+              <button class="control" type="button">Choose Bench</button>
+            </div>
+          </article>
+          <article class="zen-block kanban-node plan" tabindex="0" data-color="#6a705d" data-id="hall">
+            <div class="safe-zone">
+              <p class="kicker">Hall</p>
+              <h2>For the whole studio</h2>
+              <p class="price"><strong data-month="28" data-year="22">$28</strong> <span class="unit">a month</span></p>
+              <ul class="features">
+                <li>Every board</li>
+                <li>Room for guests</li>
+                <li>The same quiet surface</li>
+              </ul>
+              <button class="control" type="button">Choose Hall</button>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="contact-wrap" id="contact" aria-label="Contact">
+        <article class="zen-block kanban-node contact" tabindex="0" data-color="#64725d" data-id="contact">
+          <form class="safe-zone">
+            <p class="kicker">Contact</p>
+            <h2>Leave a note</h2>
+            <label class="field">Name
+              <input name="name" autocomplete="name" required />
+            </label>
+            <label class="field">Email
+              <input name="email" type="email" autocomplete="email" required />
+            </label>
+            <label class="field">Note
+              <textarea name="note" required></textarea>
+            </label>
+            <button class="control" type="submit">Send</button>
+          </form>
+        </article>
+      </section>
+    </main>
+    <p class="live" id="live" aria-live="polite"></p>
+  </div>
+
+  <script>
+    const SMIN = 20;
+    const BRIDGE = 12;
+    const WAVE = 36;
+    const MAX_BLOCKS = 8;
+    const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    let ctx = null;
+    let sound = null;
+    let muted = reduce;
+    try {
+      const stored = localStorage.getItem("zen-sound");
+      if (stored) muted = stored === "off";
+    } catch (err) {}
+
+    function createSound(audio) {
+      const master = audio.createGain();
+      master.gain.value = 0.45;
+      const comp = audio.createDynamicsCompressor();
+      comp.threshold.value = -18;
+      comp.knee.value = 12;
+      comp.ratio.value = 4;
+      comp.attack.value = 0.003;
+      comp.release.value = 0.12;
+      master.connect(comp);
+      comp.connect(audio.destination);
+      const last = new Map();
+      const allow = (name, gap) => {
+        const now = audio.currentTime;
+        if (now - (last.get(name) || 0) < gap) return false;
+        last.set(name, now);
+        return true;
+      };
+      function tone({ freq, gain, dur, type = "sine", attack = 0.006 }) {
+        const t = audio.currentTime;
+        const osc = audio.createOscillator();
+        const g = audio.createGain();
+        osc.type = type;
+        osc.frequency.value = freq;
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.exponentialRampToValueAtTime(Math.max(gain, 0.0002), t + attack);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+        osc.connect(g);
+        g.connect(master);
+        osc.start(t);
+        osc.stop(t + dur + 0.03);
+      }
+      function noiseBurst({ dur, gain, band, q }) {
+        const n = Math.floor(audio.sampleRate * dur);
+        const buf = audio.createBuffer(1, n, audio.sampleRate);
+        const data = buf.getChannelData(0);
+        for (let i = 0; i < n; i++) data[i] = Math.random() * 2 - 1;
+        const src = audio.createBufferSource();
+        src.buffer = buf;
+        const filter = audio.createBiquadFilter();
+        filter.type = "bandpass";
+        filter.frequency.value = band;
+        filter.Q.value = q;
+        const g = audio.createGain();
+        const t = audio.currentTime;
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.exponentialRampToValueAtTime(gain, t + 0.004);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+        src.connect(filter);
+        filter.connect(g);
+        g.connect(master);
+        src.start(t);
+        src.stop(t + dur + 0.02);
+      }
+      let air = null;
+      function bowl(root, dur) {
+        for (const [ratio, gain, decay] of [[1, 0.08, dur], [2.98, 0.032, dur * 0.85], [5.7, 0.016, dur * 0.65]]) {
+          tone({ freq: root * ratio, gain, dur: decay });
+          tone({ freq: root * ratio + 2.4, gain: gain * 0.55, dur: decay });
+        }
+      }
+      return {
+        setMuted(next) {
+          const t = audio.currentTime;
+          master.gain.cancelScheduledValues(t);
+          master.gain.setTargetAtTime(next ? 0.0001 : 0.45, t, 0.03);
+        },
+        hover() {
+          if (!allow("hover", 0.16)) return;
+          tone({ freq: 587, gain: 0.028, dur: 0.05 });
+          tone({ freq: 880, gain: 0.01, dur: 0.04 });
+        },
+        press() {
+          if (!allow("press", 0.05)) return;
+          tone({ freq: 165, gain: 0.07, dur: 0.08, type: "triangle" });
+          noiseBurst({ dur: 0.045, gain: 0.045, band: 900, q: 3 });
+        },
+        release() {
+          if (!allow("release", 0.05)) return;
+          tone({ freq: 330, gain: 0.035, dur: 0.06 });
+        },
+        airStart() {
+          if (air) return;
+          const seconds = 1;
+          const buf = audio.createBuffer(1, audio.sampleRate * seconds, audio.sampleRate);
+          const data = buf.getChannelData(0);
+          let brown = 0;
+          for (let i = 0; i < data.length; i++) {
+            const white = Math.random() * 2 - 1;
+            brown = (brown + 0.02 * white) / 1.02;
+            data[i] = brown * 3.5;
+          }
+          const src = audio.createBufferSource();
+          src.buffer = buf;
+          src.loop = true;
+          const filter = audio.createBiquadFilter();
+          filter.type = "bandpass";
+          filter.frequency.value = 640;
+          filter.Q.value = 0.7;
+          const g = audio.createGain();
+          g.gain.value = 0.0001;
+          src.connect(filter);
+          filter.connect(g);
+          g.connect(master);
+          src.start();
+          air = { src, g, filter };
+        },
+        airSpeed(pxPerSec) {
+          if (!air) return;
+          const t = audio.currentTime;
+          const target = Math.min(0.045, Math.max(0.0001, pxPerSec / 9000));
+          air.g.gain.setTargetAtTime(target, t, 0.05);
+          air.filter.frequency.setTargetAtTime(480 + Math.min(pxPerSec, 1400) * 0.35, t, 0.08);
+        },
+        airStop() {
+          if (!air) return;
+          const dying = air;
+          air = null;
+          const t = audio.currentTime;
+          dying.g.gain.setTargetAtTime(0.0001, t, 0.04);
+          dying.src.stop(t + 0.2);
+        },
+        drop() {
+          this.airStop();
+          bowl(196, 1.4);
+        },
+        reject() {
+          this.airStop();
+          tone({ freq: 196, gain: 0.04, dur: 0.18 });
+          tone({ freq: 185, gain: 0.028, dur: 0.2 });
+        },
+      };
+    }
+
+    function ensure() {
+      if (sound) return sound;
+      const AC = window.AudioContext || window.webkitAudioContext;
+      ctx = new AC();
+      sound = createSound(ctx);
+      sound.setMuted(muted);
+      return sound;
+    }
+
+    function smin(a, b, k) {
+      const h = Math.min(1, Math.max(0, 0.5 + 0.5 * (b - a) / k));
+      return b * (1 - h) + a * h - k * h * (1 - h);
+    }
+    function sdOrganicRock(cx, cy, w, h, x, y) {
+      const bpX = x - cx;
+      const bpY = y - cy;
+      const bX = w * 0.5;
+      const bY = h * 0.5;
+      const radius = Math.min(bX, bY) * 0.45;
+      const qx = Math.abs(bpX) - bX + radius;
+      const qy = Math.abs(bpY) - bY + radius;
+      const dBox = Math.hypot(Math.max(qx, 0), Math.max(qy, 0)) + Math.min(Math.max(qx, qy), 0) - radius;
+      const angle = Math.atan2(bpY, bpX);
+      const distortion = Math.sin(angle * 2 + cx * 0.01) * (Math.min(bX, bY) * 0.08)
+        + Math.cos(angle * 3 + cy * 0.01) * (Math.min(bX, bY) * 0.04);
+      return dBox - distortion;
+    }
+    function hexToRgb(hex) {
+      const n = parseInt(hex.slice(1), 16);
+      return [(n >> 16 & 255) / 255, (n >> 8 & 255) / 255, (n & 255) / 255];
+    }
+
+    const canvas = document.getElementById("glcanvas");
+    const gl = canvas.getContext("webgl", { antialias: false, preserveDrawingBuffer: true });
+    if (!gl) document.body.classList.add("no-gl");
+    const live = document.getElementById("live");
+    const blocks = [...document.querySelectorAll(".kanban-node")].map((el) => ({
+      el,
+      id: el.dataset.id,
+      tx: 0,
+      ty: 0,
+      color: hexToRgb(el.dataset.color),
+    }));
+
+    const vsSource = `
+      attribute vec2 a_position;
+      void main() { gl_Position = vec4(a_position, 0.0, 1.0); }
+    `;
+    const fsSource = `
+      precision highp float;
+      uniform vec2 u_resolution;
+      uniform float u_dpr;
+      uniform vec4 u_bounds[${MAX_BLOCKS}];
+      uniform vec3 u_colors[${MAX_BLOCKS}];
+      uniform int u_numBlocks;
+      float smin(float a, float b, float k) {
+        float h = clamp(0.5 + 0.5 * (b - a) / k, 0.0, 1.0);
+        return mix(b, a, h) - k * h * (1.0 - h);
+      }
+      float sdOrganicRock(vec2 p, vec2 center, vec2 size) {
+        vec2 bp = p - center;
+        vec2 b = size * 0.5;
+        float radius = min(b.x, b.y) * 0.45;
+        vec2 q = abs(bp) - b + vec2(radius);
+        float dBox = length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - radius;
+        float angle = atan(bp.y, bp.x);
+        float distortion = sin(angle * 2.0 + center.x * 0.01) * (min(b.x, b.y) * 0.08)
+                         + cos(angle * 3.0 + center.y * 0.01) * (min(b.x, b.y) * 0.04);
+        return dBox - distortion;
+      }
+      vec4 map(vec2 p) {
+        float d = 10000.0;
+        vec3 color = vec3(0.0);
+        float closest = 10000.0;
+        for (int i = 0; i < ${MAX_BLOCKS}; i++) {
+          if (i >= u_numBlocks) break;
+          vec2 center = u_bounds[i].xy;
+          vec2 size = u_bounds[i].zw;
+          float dist = sdOrganicRock(p, center, size);
+          if (dist < closest) { closest = dist; color = u_colors[i]; }
+          d = smin(d, dist, 20.0);
+        }
+        return vec4(d, color);
+      }
+      float getHeight(vec2 p) {
+        float d = map(p).x;
+        if (d <= 0.0) {
+          float bevel = clamp(abs(d) / 20.0, 0.0, 1.0);
+          return mix(0.0, 3.0, sin(bevel * 1.5707));
+        }
+        float waveSpacing = 36.0;
+        float freq = 6.28318 / waveSpacing;
+        float wave = smoothstep(-0.6, 0.6, sin(d * freq - 1.5707));
+        float mask = smoothstep(0.0, 12.0, d);
+        return wave * mask * -1.0;
+      }
+      void main() {
+        vec2 p = gl_FragCoord.xy / u_dpr;
+        p.y = (u_resolution.y / u_dpr) - p.y;
+        vec4 scene = map(p);
+        float d = scene.x;
+        vec3 rockColor = scene.yzw;
+        vec2 eps = vec2(1.0, 0.0);
+        float h = getHeight(p);
+        vec3 normal = normalize(vec3(h - getHeight(p + eps.xy), h - getHeight(p + eps.yx), 1.0));
+        vec3 lightDir = normalize(vec3(-1.0, -1.0, 1.2));
+        float diffuse = max(dot(normal, lightDir), 0.0);
+        vec3 sandShade = vec3(0.70, 0.68, 0.65);
+        vec3 sandHighlight = vec3(1.0, 1.0, 0.98);
+        vec3 finalColor;
+        if (d <= 0.0) {
+          finalColor = rockColor * (diffuse * 0.55 + 0.55);
+          float rim = pow(1.0 - max(dot(normal, vec3(0.0, 0.0, 1.0)), 0.0), 4.0);
+          finalColor += vec3(0.12) * rim;
+          float innerEdge = smoothstep(-15.0, 0.0, d);
+          finalColor *= mix(0.9, 1.0, innerEdge);
+        } else {
+          finalColor = mix(sandShade, sandHighlight, diffuse);
+          float crevice = smoothstep(0.0, 6.0, d);
+          finalColor = mix(finalColor * 0.75, finalColor, crevice);
+        }
+        gl_FragColor = vec4(finalColor, 1.0);
+      }
+    `;
+
+    let program = null;
+    let locs = null;
+    let bufferSize = { w: 0, h: 0, dpr: 0 };
+    function compile() {
+      if (!gl) return;
+      const shader = (type, source) => {
+        const s = gl.createShader(type);
+        gl.shaderSource(s, source);
+        gl.compileShader(s);
+        if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
+          console.error(gl.getShaderInfoLog(s));
+          document.body.classList.add("no-gl");
+        }
+        return s;
+      };
+      program = gl.createProgram();
+      gl.attachShader(program, shader(gl.VERTEX_SHADER, vsSource));
+      gl.attachShader(program, shader(gl.FRAGMENT_SHADER, fsSource));
+      gl.linkProgram(program);
+      if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+        console.error(gl.getProgramInfoLog(program));
+        document.body.classList.add("no-gl");
+        program = null;
+        return;
+      }
+      gl.useProgram(program);
+      const buffer = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1]), gl.STATIC_DRAW);
+      const loc = gl.getAttribLocation(program, "a_position");
+      gl.enableVertexAttribArray(loc);
+      gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+      locs = {
+        resolution: gl.getUniformLocation(program, "u_resolution"),
+        dpr: gl.getUniformLocation(program, "u_dpr"),
+        bounds: gl.getUniformLocation(program, "u_bounds"),
+        colors: gl.getUniformLocation(program, "u_colors"),
+        count: gl.getUniformLocation(program, "u_numBlocks"),
+      };
+    }
+    compile();
+
+    function metrics(block) {
+      const r = block.el.getBoundingClientRect();
+      return { cx: r.left + r.width / 2, cy: r.top + r.height / 2, w: r.width, h: r.height };
+    }
+    function sdBlock(block, x, y) {
+      const m = metrics(block);
+      return sdOrganicRock(m.cx, m.cy, m.w, m.h, x, y);
+    }
+    function applyTransform(block) {
+      block.el.style.transform = `translate3d(${block.tx}px, ${block.ty}px, 0)`;
+    }
+    function channel(a, b) {
+      const ma = metrics(a);
+      const mb = metrics(b);
+      const x = (ma.cx + mb.cx) / 2;
+      const y = (ma.cy + mb.cy) / 2;
+      const da = sdOrganicRock(ma.cx, ma.cy, ma.w, ma.h, x, y);
+      const db = sdOrganicRock(mb.cx, mb.cy, mb.w, mb.h, x, y);
+      return { mid: smin(da, db, SMIN), gap: da + db, ma, mb };
+    }
+    function separate(block) {
+      let pushed = false;
+      for (let n = 0; n < 8; n++) {
+        let moved = false;
+        for (const other of blocks) {
+          if (other === block) continue;
+          const c = channel(block, other);
+          if (c.mid >= BRIDGE) continue;
+          let dx = c.ma.cx - c.mb.cx;
+          let dy = c.ma.cy - c.mb.cy;
+          const len = Math.hypot(dx, dy) || 1;
+          const push = BRIDGE - c.mid + 0.8;
+          block.tx += (dx / len) * push;
+          block.ty += (dy / len) * push;
+          applyTransform(block);
+          moved = true;
+          pushed = true;
+        }
+        if (!moved) break;
+      }
+      return pushed;
+    }
+    const shared = new Set();
+    function checkBowl(block) {
+      for (const other of blocks) {
+        if (other === block) continue;
+        const key = [block.id, other.id].sort().join(":");
+        const c = channel(block, other);
+        const open = c.gap < WAVE && c.mid > 0;
+        if (open && !shared.has(key)) {
+          shared.add(key);
+          try { ensure().drop(); } catch (err) {}
+        } else if (!open && c.gap >= WAVE) {
+          shared.delete(key);
+        }
+      }
+    }
+
+    function resize() {
+      if (!gl || !program) return;
+      const dpr = window.devicePixelRatio || 1;
+      const w = Math.floor(innerWidth * dpr);
+      const h = Math.floor(innerHeight * dpr);
+      if (w === bufferSize.w && h === bufferSize.h && dpr === bufferSize.dpr) return;
+      canvas.width = w;
+      canvas.height = h;
+      bufferSize = { w, h, dpr };
+      gl.viewport(0, 0, w, h);
+      gl.useProgram(program);
+      const buffer = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1]), gl.STATIC_DRAW);
+      const loc = gl.getAttribLocation(program, "a_position");
+      gl.enableVertexAttribArray(loc);
+      gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+    }
+    function draw() {
+      if (!gl || !program) return;
+      resize();
+      const bounds = new Float32Array(MAX_BLOCKS * 4);
+      const colors = new Float32Array(MAX_BLOCKS * 3);
+      blocks.forEach((block, i) => {
+        const m = metrics(block);
+        bounds.set([m.cx, m.cy, m.w, m.h], i * 4);
+        colors.set(block.color, i * 3);
+      });
+      gl.uniform2f(locs.resolution, canvas.width, canvas.height);
+      gl.uniform1f(locs.dpr, bufferSize.dpr || 1);
+      gl.uniform1i(locs.count, blocks.length);
+      gl.uniform4fv(locs.bounds, bounds);
+      gl.uniform3fv(locs.colors, colors);
+      gl.drawArrays(gl.TRIANGLES, 0, 6);
+    }
+
+    let dragging = null;
+    let returning = null;
+    let target = { x: 0, y: 0 };
+    let layoutOrigin = { x: 0, y: 0 };
+    let originTranslate = { x: 0, y: 0 };
+    let downPointer = { x: 0, y: 0 };
+    let grab = { x: 0, y: 0 };
+    let pointer = { x: 0, y: 0, t: 0 };
+    let airOn = false;
+    let corrected = false;
+    let ticking = false;
+    const controlSelector = "button, a, input, textarea, label";
+
+    function schedule() {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(tick);
+    }
+    function tick() {
+      ticking = false;
+      const gain = reduce ? 1 : 0.35;
+      if (dragging) {
+        dragging.tx += (target.x - dragging.tx) * gain;
+        dragging.ty += (target.y - dragging.ty) * gain;
+        applyTransform(dragging);
+        if (separate(dragging)) corrected = true;
+        checkBowl(dragging);
+      }
+      if (returning) {
+        const block = returning.block;
+        block.tx += (returning.x - block.tx) * gain;
+        block.ty += (returning.y - block.ty) * gain;
+        applyTransform(block);
+        separate(block);
+        if (Math.hypot(block.tx - returning.x, block.ty - returning.y) < 0.6) {
+          block.tx = returning.x;
+          block.ty = returning.y;
+          applyTransform(block);
+          separate(block);
+          returning = null;
+        }
+      }
+      draw();
+      if (dragging || returning) schedule();
+    }
+
+    function onDown(e) {
+      const block = blocks.find((item) => item.el === e.currentTarget);
+      if (!block || e.button !== 0) return;
+      if (e.target.closest(controlSelector)) return;
+      if (sdBlock(block, e.clientX, e.clientY) >= 0) return;
+      try { ensure().press(); } catch (err) {}
+      const m = metrics(block);
+      dragging = block;
+      returning = null;
+      grab = { x: e.clientX - m.cx, y: e.clientY - m.cy };
+      layoutOrigin = { x: m.cx - block.tx, y: m.cy - block.ty };
+      originTranslate = { x: block.tx, y: block.ty };
+      downPointer = { x: e.clientX, y: e.clientY };
+      target = { x: block.tx, y: block.ty };
+      pointer = { x: e.clientX, y: e.clientY, t: performance.now() };
+      airOn = false;
+      corrected = false;
+      block.el.setPointerCapture(e.pointerId);
+      schedule();
+    }
+    function onMove(e) {
+      if (!dragging || e.currentTarget !== dragging.el) return;
+      const now = performance.now();
+      const dx = e.clientX - pointer.x;
+      const dy = e.clientY - pointer.y;
+      if (!airOn && Math.hypot(e.clientX - downPointer.x, e.clientY - downPointer.y) > 4) {
+        airOn = true;
+        try { ensure().airStart(); } catch (err) {}
+      }
+      const dt = Math.max(16, now - pointer.t);
+      if (airOn) {
+        try { ensure().airSpeed(Math.hypot(dx, dy) / dt * 1000); } catch (err) {}
+      }
+      pointer = { x: e.clientX, y: e.clientY, t: now };
+      target = {
+        x: e.clientX - grab.x - layoutOrigin.x,
+        y: e.clientY - grab.y - layoutOrigin.y,
+      };
+      schedule();
+    }
+    function finishDrag(cancel) {
+      if (!dragging) return;
+      const block = dragging;
+      dragging = null;
+      if (cancel) {
+        returning = { block, x: originTranslate.x, y: originTranslate.y };
+        try { ensure().reject(); } catch (err) {}
+      } else if (corrected) {
+        live.textContent = "Stones stay apart.";
+        try { ensure().reject(); } catch (err) {}
+      } else if (airOn) {
+        try { ensure().airStop(); } catch (err) {}
+      } else {
+        try { ensure().release(); } catch (err) {}
+      }
+      airOn = false;
+      schedule();
+    }
+
+    for (const block of blocks) {
+      block.el.addEventListener("pointerdown", onDown);
+      block.el.addEventListener("pointermove", onMove);
+      block.el.addEventListener("pointerup", () => finishDrag(false));
+      block.el.addEventListener("pointercancel", () => finishDrag(true));
+      block.el.addEventListener("keydown", (e) => {
+        if (e.target !== block.el) return;
+        if (e.key === "Enter") {
+          const control = block.el.querySelector("button, a, input, textarea");
+          if (control) { e.preventDefault(); control.focus(); }
+          return;
+        }
+        if (e.key === "Escape") {
+          if (dragging === block) return;
+          block.tx = 0;
+          block.ty = 0;
+          applyTransform(block);
+          separate(block);
+          draw();
+          return;
+        }
+        const step = { ArrowLeft: [-8, 0], ArrowRight: [8, 0], ArrowUp: [0, -8], ArrowDown: [0, 8] }[e.key];
+        if (!step) return;
+        e.preventDefault();
+        block.tx += step[0];
+        block.ty += step[1];
+        applyTransform(block);
+        if (separate(block)) {
+          live.textContent = "Stones stay apart.";
+          try { ensure().reject(); } catch (err) {}
+        }
+        checkBowl(block);
+        draw();
+      });
+    }
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && dragging) finishDrag(true);
+    });
+
+    document.querySelectorAll(".control, .cadence button, .nav a").forEach((el) => {
+      el.addEventListener("pointerenter", (e) => {
+        if (e.pointerType === "touch" || !sound) return;
+        sound.hover();
+      });
+      el.addEventListener("pointerdown", () => {
+        try { ensure().press(); } catch (err) {}
+      });
+      el.addEventListener("pointerup", () => {
+        try { ensure().release(); } catch (err) {}
+      });
+    });
+
+    const mute = document.querySelector(".mute");
+    function paintMute() {
+      mute.setAttribute("aria-checked", muted ? "false" : "true");
+      mute.querySelector(".mute-label").textContent = muted ? "Quiet" : "Sound";
+    }
+    paintMute();
+    mute.addEventListener("click", () => {
+      muted = !muted;
+      paintMute();
+      try { localStorage.setItem("zen-sound", muted ? "off" : "on"); } catch (err) {}
+      if (sound) sound.setMuted(muted);
+    });
+
+    let period = "month";
+    function paintPrices() {
+      document.querySelectorAll(".price strong").forEach((node) => {
+        const value = node.dataset[period];
+        node.textContent = "$" + value;
+      });
+      document.querySelectorAll(".unit").forEach((node) => {
+        node.textContent = period === "year" ? "a month, billed yearly" : "a month";
+      });
+    }
+    document.querySelectorAll(".cadence button").forEach((button) => {
+      button.addEventListener("click", () => {
+        period = button.dataset.period;
+        document.querySelectorAll(".cadence button").forEach((item) => {
+          item.setAttribute("aria-pressed", item === button ? "true" : "false");
+        });
+        paintPrices();
+        live.textContent = period === "year" ? "Showing yearly prices." : "Showing monthly prices.";
+      });
+    });
+
+    document.querySelectorAll(".plan .control").forEach((button) => {
+      button.addEventListener("click", () => {
+        const name = button.textContent.replace("Choose ", "");
+        live.textContent = name + " is selected.";
+      });
+    });
+    document.querySelector(".contact form").addEventListener("submit", (e) => {
+      e.preventDefault();
+      live.textContent = "The note is kept.";
+      e.currentTarget.reset();
+    });
+
+    window.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", schedule);
+    schedule();
+  </script>
+</body>
+</html>
