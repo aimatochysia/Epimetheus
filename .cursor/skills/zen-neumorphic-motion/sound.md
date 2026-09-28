@@ -176,8 +176,8 @@ export function createSound(ctx) {
 | `airStart` | Drag threshold crossed (about 4px), once |
 | `airSpeed` | `pointermove` while dragging, with px/s since the previous event |
 | `airStop` | Included in `drop` and `reject` |
-| `drop` | Accepted well |
-| `reject` | Miss, cancel, or Escape |
+| `drop` | Once, when two stones' warps first share a channel |
+| `reject` | Escape, or a release that had to be pushed back to `--gap` |
 
 Do not allocate noise buffers inside `pointermove`. `airSpeed` only retargets an existing gain.
 

@@ -13,10 +13,14 @@ Dawn is the default. Dusk is the same light direction on a dark paper. Switch by
 | `--shade` | `#c9bfb2` | `#161412` | Bottom-right shadow |
 | `--ink` | `#2c2824` | `#f3eee6` | Text, 7:1 on paper |
 | `--ink-soft` | `#4e4942` | `#c9c0b4` | Labels and kickers, at least 4.5:1 |
-| `--moss` | `#3e4a37` | `#c5d4b8` | Focus, action mark |
-| `--clay` | `#d2c3b0` | `#4a4038` | Metaball body |
+| `--moss` | `#3e4a37` | `#c5d4b8` | Focus mark on sand |
+| `--stone` | `#5a6852` | `#8fa08a` | Readable stone fill |
+| `--stone-ink` | `#f4f1ea` | `#1c2118` | Text on `--stone`, at least 4.5:1 |
+| `--stone-highlight` | `#c5cebf` | `#a8b8a4` | Top-left light on the stone |
+| `--stone-shade` | `#3c4838` | `#1a1e18` | Bottom-right shade on the stone |
+| `--grove` | `#7f8f76` | `#3e4a3c` | Planted mass with little or no text |
 
-`--moss` above is darkened for strokes and any text. A lighter moss fill for a large mark (at least 24px) may use dawn `#5d6e52` or dusk `#a3b396`. Run the contrast check before using the lighter moss on paper.
+`--stone` (#5a6852) against `--stone-ink` is about 5.3:1. A lighter sage looks closer to a sunlit garden and fails that bar; darken the fill until the type passes, and keep titles at 18px or larger when you are near the floor. `--grove` is foliage. Do not set body text on it. A one-word label on a grove uses `--ink` only after you recheck contrast, otherwise leave it unlabeled.
 
 ## Derivation
 
@@ -51,8 +55,11 @@ border: 1px solid color-mix(in srgb, var(--ink) 12%, transparent);
 | --- | --- | --- |
 | `--dist-sm` | `6px` | Controls near 56px |
 | `--dist` | `10px` | Default orbs and wells |
-| `--dist-lg` | `16px` | The focal circle |
+| `--dist-lg` | `16px` | The largest stone |
 | `--blur` | `calc(var(--dist) * 2)` | Always paired with the distance in use |
+| `--gap` | `72px` | Minimum daylight between stone outlines |
+| `--rake` | `10px` | Distance between grooves |
+| `--reach` | `150px` | How far a silhouette's echo travels |
 
 Hover multiplies distance by 1.3. Press uses the resting distance, inset. Spread stays 0. A non-zero spread reads as a sticker.
 
@@ -68,10 +75,7 @@ Flat `--paper` is the default. Skip the gradient on ordinary controls.
 
 Space follows a short Fibonacci set: `8, 13, 21, 34, 55, 89`. Group padding and the gap between satellites come from this set. The quiet region of a view is at least `89px` on desktop and `55px` on a narrow screen.
 
-| Radius | Value |
-| --- | --- |
-| Orb, stone, pool | `50%` |
-| Rare panel | `28px` or `40px` |
+Stone silhouettes come from the sdf in [contours.md](contours.md). Do not approximate them with a single `border-radius`. The gap between outlines is `--gap`, not the Fibonacci inset.
 
 Type:
 
@@ -91,7 +95,14 @@ Selection: `background: color-mix(in srgb, var(--moss) 25%, var(--paper))`.
   --ink: #2c2824;
   --ink-soft: #4e4942;
   --moss: #3e4a37;
-  --clay: #d2c3b0;
+  --stone: #5a6852;
+  --stone-ink: #f4f1ea;
+  --stone-highlight: #c5cebf;
+  --stone-shade: #3c4838;
+  --grove: #7f8f76;
+  --gap: 72px;
+  --rake: 10px;
+  --reach: 150px;
   --dist: 10px;
   --blur: calc(var(--dist) * 2);
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
@@ -106,7 +117,11 @@ Selection: `background: color-mix(in srgb, var(--moss) 25%, var(--paper))`.
   --ink: #f3eee6;
   --ink-soft: #c9c0b4;
   --moss: #c5d4b8;
-  --clay: #4a4038;
+  --stone: #8fa08a;
+  --stone-ink: #1c2118;
+  --stone-highlight: #a8b8a4;
+  --stone-shade: #1a1e18;
+  --grove: #3e4a3c;
 }
 ```
 

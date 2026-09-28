@@ -1,157 +1,79 @@
 # Motion
 
-Two clocks. Ambient motion is a breath. Gesture motion is a touch. They do not share a duration.
+Two clocks. The rake drifts. A gesture answers at once. They do not share a duration.
 
 ## Easing and springs
 
-Zen ease-out, for hover in, ripple, and entrances: `cubic-bezier(0.22, 1, 0.36, 1)`.
+Zen ease-out, for hover and for the grooves easing outward: `cubic-bezier(0.22, 1, 0.36, 1)`.
 
 Settle, for hover out: `cubic-bezier(0.4, 0, 0.2, 1)`.
 
 | Moment | Duration | Notes |
 | --- | --- | --- |
-| Hover in | 220ms | Ease-out. Scale 1.02. Distance × 1.3 |
-| Hover out | 320ms | Settle. Longer than the entrance |
-| Press | 120ms | Scale 0.985. Swap to inset |
-| Ripple | 800ms | One ring, opacity 0.35 → 0, scale 1 → 1.35 |
-| Drop settle | 400ms | Ease-out into the well |
-| Ring breathe | 8s | Scale 1 → 1.018 → 1, ease-in-out, infinite |
-| Spiral rotation | 72s | Linear, after a 2.4s draw-on |
-| Blob drift | 9–14s | Amplitude under 12% of the pool |
+| Hover in | 220ms | Shadow distance × 1.3. That stone's echo +5px |
+| Hover out | 320ms | Settle both |
+| Press | 120ms | Inset shadow. Warp −3px |
+| Drag follow | Per frame | Position += (pointer − position) × 0.35 |
+| Settle after drag | 400ms | Ease-out. No bounce |
+| Rake drift | 14s cycle | 2.2px sine along the grooves. Stones stay |
 
-Return-home spring, when a drop is rejected: stiffness `160`, damping `26`, mass `1.1`. The stone may travel a few pixels past the cradle, then rest. Do not use a snappy UI spring (stiffness 400, damping 12). That reads as a toy.
+A blocked drag does not bounce off the neighbor. It stops at `--gap` and stays in the hand until release.
 
-With Motion (`motion/react`), map the same numbers. Keep shadow changes in CSS. Interleave a shadow animation on every frame and the extrusion flickers.
+With Motion (`motion/react`), use the durations above for the stone's transform. Keep the shadow on a class that changes at drag start. Redrawing `box-shadow` every frame flickers the extrusion. The rake is a canvas redraw, not a CSS transition.
 
-```jsx
-<motion.button
-  whileHover={{ scale: 1.02 }}
-  whileTap={{ scale: 0.985 }}
-  transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-/>
-```
+## Hover and press
 
-Buttons can stay on CSS. Use `:hover`, `:active`, and `:focus-visible`. Reach for a library when a gesture needs velocity: drag, shared layout, or the return spring.
-
-## Hover, press, ripple
+The stone's fill and shadow can live on a DOM node clipped to the silhouette, or on the canvas fill described in [contours.md](contours.md). Either way the outline used for hit testing and the outline used for the warp are the same sdf.
 
 ```css
-.orb {
-  transition:
-    transform 320ms var(--ease-settle),
-    box-shadow 320ms var(--ease-settle);
+.stone {
+  transition: box-shadow 320ms var(--ease-settle);
 }
-.orb:hover {
-  transform: scale(1.02);
-  --dist: 13px;
+.stone:hover {
+  --dist: calc(var(--dist) * 1.3);
   transition-duration: 220ms;
   transition-timing-function: var(--ease-out);
 }
-.orb:active {
-  transform: scale(0.985);
+.stone:active {
   box-shadow:
-    inset var(--dist) var(--dist) var(--blur) var(--shade),
-    inset calc(var(--dist) * -1) calc(var(--dist) * -1) var(--blur) var(--highlight);
+    inset var(--dist) var(--dist) var(--blur) var(--stone-shade),
+    inset calc(var(--dist) * -1) calc(var(--dist) * -1) var(--blur) var(--stone-highlight);
 }
-.orb:focus-visible {
-  outline: 2px solid var(--moss);
+.stone:focus-visible {
+  outline: 2px solid var(--stone-ink);
   outline-offset: 4px;
 }
 ```
 
-A ripple is a child circle, `pointer-events: none`, centered on the pointer inside the control. Restart its animation by removing and re-adding the class. Play the press cue on `pointerdown`, the release cue on `pointerup`. Hover cue on `pointerenter` only when `pointerType` is not `touch`, with the cooldown in [sound.md](sound.md).
+Play the press cue on `pointerdown`, the release cue on `pointerup` when the pointer never passed the drag threshold (4px). Hover cue on `pointerenter` only when `pointerType` is not `touch`.
 
-The second signal: a 6px moss dot, or a 1px moss ring inset 8px, on any control that is only a circle. Resting and pressed must differ by shadow and by that mark (the mark fills on press, or the dot scales to 0.6).
+The second signal on hover is the groove movement, not a scale jump. Do not scale a stone past 1.01. Scaling reads as a button. This is a stone in sand.
 
-## Rings
+## Drag
 
-Use an odd count: 3, 5, or 7. Stroke 1px. `vector-effect: non-scaling-stroke` if the SVG scales. Opacity is about `0.28 - i * 0.03`.
+Pointer events. `touch-action: none`. HTML5 drag hides the shape and fights the shadow.
 
-```css
-.ring {
-  fill: none;
-  stroke: var(--ink);
-  stroke-width: 1;
-  transform-origin: center;
-  transform-box: fill-box;
-  animation: breathe 8s var(--ease-settle) infinite;
-  animation-delay: calc(var(--i) * -0.8s);
-}
-@keyframes breathe {
-  50% { transform: scale(1.018); }
-}
-```
+1. `pointerdown` inside `sdf < 0`. Record the grab offset. `setPointerCapture`. Deepen the shadow once. Play press.
+2. Past 4px, start the air voice and set the state to `dragging`.
+3. `pointermove`. Target = pointer minus grab offset. Position lerps 35% of the way there each frame. Propose the new lobe positions, then push the stone back along the line to its neighbor until every pairwise gap is at least `--gap`. Grooves redraw from the corrected positions.
+4. The first time the gap to a neighbor falls below about `0.85 * reach`, those echoes newly share the channel. Play the bowl once. Do not repeat it while the channel stays shared. `meetK` is only how smoothly the curves join. The outlines never get that close.
+5. `pointerup`. Stop the air voice. Leave the stone where the gap allows. Announce nothing if it simply rests. Announce "Stones stay apart." if the release position was corrected.
+6. `Escape` returns the stone to the pointerdown position along the same lerp, without crossing another stone. Play the quiet pair.
 
-The stagger is negative so the wave is already moving on first paint. Neighbors must not peak together.
+Keyboard: the focused stone moves 8px on the arrow keys, through the same separation test. `Enter` presses it.
 
-An ensō, when a single brush circle is the mark: a circle with `pathLength="1"`, `stroke-dasharray: 0.92 0.08`, `stroke-linecap: round`, opacity near 0.4. It stays open. Do not close the gap.
+Labels move with the stone. They are not a second hit target.
 
-## Spirals
+## What the grooves do while a stone moves
 
-Archimedean, even gap between turns. Polar form `r = a + bθ`, with θ in radians. The gap between turns is `2πb`. For an ornament around the focal circle, use about 2.5–3.5 turns and a gap of 14–22px. Stroke 1px, ink at about 22% opacity, `stroke-linecap: round`.
-
-```js
-function archimedeanPath(cx, cy, a, b, turns, steps = 480) {
-  const max = turns * Math.PI * 2;
-  let d = "";
-  for (let i = 0; i <= steps; i++) {
-    const theta = (i / steps) * max;
-    const r = a + b * theta;
-    const x = cx + Math.cos(theta) * r;
-    const y = cy + Math.sin(theta) * r;
-    d += `${i ? "L" : "M"}${x.toFixed(1)} ${y.toFixed(1)}`;
-  }
-  return d;
-}
-```
-
-Draw-on, once, then a slow spin of the whole path. Set `pathLength="1"` on the `<path>` (an SVG attribute, not a CSS property) so the dash does not depend on path length.
-
-```css
-.spiral {
-  fill: none;
-  stroke: color-mix(in srgb, var(--ink) 22%, transparent);
-  stroke-width: 1;
-  stroke-linecap: round;
-  stroke-dasharray: 1;
-  stroke-dashoffset: 1;
-  animation: draw 2.4s var(--ease-out) forwards;
-  transform-origin: center;
-}
-@keyframes draw { to { stroke-dashoffset: 0; } }
-.spiral-spin { animation: spin 72s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
-```
-
-The path is visible without the draw animation (set `stroke-dashoffset: 0` inside reduced motion). A golden spiral, `r = a * e^(0.30635θ)` with `0.30635 = ln(φ) / (π/2)`, grows by φ every quarter turn. Cap it near two turns or it leaves the circle. Use it only as the subject of the view, not as a background texture.
-
-Center the spiral on the focal circle. It is larger than the rings and fainter. It does not sit behind a paragraph of text.
-
-## Drag and drop
-
-Use pointer events. HTML5 drag-and-drop hides the ghost and fights the shadow. The stone is `touch-action: none`.
-
-States: `rest`, `dragging`, `settled`, `returning`.
-
-1. `pointerdown` on the stone. `setPointerCapture`. Record the grab offset. Cradle swaps to inset. Stone swaps to the deep raised shadow once. Play press, then start the air voice. If the pointer is a keyboard activation (`Enter` or Space), skip to the accept animation toward the primary well.
-2. `pointermove`. Position is `previous + (pointer - previous) * 0.22`, so the stone lags like a weight. Feed speed in px/s to the air voice. Every 40px of travel, spawn a ripple at the stone: a circle, 800ms, opacity 0.28 to 0, then remove the node.
-3. While the distance from stone center to a well center is under `wellRadius + stoneRadius`, inject a bridge blob into that well's pool. Its radius lerps from 8px to the stone radius as the stone approaches. This is the merge, before the drop.
-4. `pointerup` inside a well (center distance under `wellRadius * 0.72`): hide the DOM stone, add a permanent blob of the same radius, pulse the rings once (scale 1.04, opacity up, 600ms), play the bowl, set `settled`. Announce "Stone placed in the pool."
-5. `pointerup` outside: stop the air voice, play the reject cue, spring the stone to the cradle, cradle returns to rest, announce "Stone returned."
-6. `Escape` during a drag takes the reject path. A second activation on a settled stone lifts it back to the cradle.
-
-The bridge blob and the stone share the pool's center coordinate space. Convert page coordinates by the pool's `getBoundingClientRect`.
-
-Keyboard: the stone is a button with `aria-roledescription="draggable stone"`. A polite live region reports the result. Do not rely on drag events for the only path.
+Near the moving outline, grooves stay parallel to it and travel with it. In the channel, as the gap shrinks toward `--gap`, the facing grooves flatten, bow toward each other, and join into one wave. As the gap opens again, that wave splits back into two families. The join is the smooth minimum in [contours.md](contours.md). Do not lerp two pre-drawn line sets. Recompute the field.
 
 ## Reduced motion
 
 ```css
 @media (prefers-reduced-motion: reduce) {
-  .ring, .spiral, .spiral-spin { animation: none; }
-  .spiral { stroke-dashoffset: 0; }
-  .orb { transition-duration: 1ms; }
+  .stone { transition-duration: 1ms; }
 }
 ```
 
-Stop the blob drift clock. Keep shadow swaps for press and drop. Sound starts muted; the mute switch can turn it on. See [sound.md](sound.md).
+Skip the drift term. Keep separation, hover warp, and the redraw on drag. Sound starts muted until the mute switch is turned on. See [sound.md](sound.md).

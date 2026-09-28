@@ -1,126 +1,131 @@
 ---
 name: zen-neumorphic-motion
 description: >-
-  Designs calm neumorphic zen interfaces with extruded soft surfaces, concentric
-  circles, spirals, and metaball flow, plus tactile motion and procedural sound
-  on hover, press, drag, and drop. Use when building or restyling UI, components,
-  microinteractions, drag-and-drop, ambient motion, blobs, or interface sound.
+  Designs top-down zen-garden interfaces: neumorphic sand and separated stones,
+  with raked depth lines that follow each stone's silhouette and merge like
+  waves where they meet. Includes tactile motion and procedural sound on hover,
+  press, and drag. Use when building or restyling UI, gardens, contour lines,
+  neumorphic surfaces, drag interactions, or interface sound.
 ---
 
 # Zen Neumorphic Motion
 
-Build interfaces that feel pressed out of one warm surface. Depth comes from a single top-left light. Geometry is circles, rings, and a slow spiral. Metaballs pool like clay and fuse when a gesture brings them together. Hover, press, drag, and drop each answer in light and in sound.
+Build a top-down garden. The page is raked sand. Stones and planted masses sit in it, apart from each other, extruded by one top-left light. Around every stone, depth lines repeat its silhouette. Where those lines meet, they bend and join into one wave. They do not cross, and the stones never do that job for them.
 
 ## When to apply
 
-Apply this skill for screens, components, empty states, and interaction polish in this project. Read [tokens.md](tokens.md), [motion.md](motion.md), [metaballs.md](metaballs.md), and [sound.md](sound.md) before writing CSS, canvas, or audio. Follow those recipes. Do not invent a second visual language in the same view.
+Apply this skill for screens, components, and interaction polish in this project. Read [tokens.md](tokens.md), [contours.md](contours.md), [motion.md](motion.md), and [sound.md](sound.md) before writing CSS, canvas, or audio.
 
 ## Thesis
 
-Ma (間) is the pause that makes the circle readable. Leave one quiet region in every view. Motion runs on two clocks: ambient cycles of several seconds, and gesture replies under a quarter second. Sound is synthesized in the browser, kept quiet, and always paired with a visual change that still makes sense on mute.
+A karesansui garden, seen from directly above. Sand is one continuous material. Each stone or grove is a separate mass with a gap of bare sand around it. The rake is a family of grooves whose path is the stone's outline, stepped outward. Far from any mass the grooves are quiet parallel waves. Close to a mass they hug its edge. In the channel between two masses the two influences add, so the grooves change shape and become one shared wave.
 
-Neumorphism here means the control fill matches the page, and a light shadow plus a dark shadow extrude it or press it in. Claymorphism (a pastel body, a colored drop shadow, an inner gloss) is a different system. Do not mix the two in one view.
+Ma (間) is the sand between stones. Do not fill it with another object. Motion has two clocks: the rake drifts over several seconds, and a gesture answers in under a quarter second. Sound is synthesized, quiet, and paired with a visual change.
+
+Neumorphism is the depth of that material. Sand and stone share one light. Grooves are incised. Stones are raised. Claymorphism (a pastel body, a colored drop shadow, an inner gloss) is a different system. Do not mix the two in one view.
 
 ## Build order
 
-1. Derive tokens from one base color. Lock the light at the top-left.
-2. Place one focal circle. Add 3, 5, or 7 rings. Add at most one spiral, sharing that center.
-3. Extrude controls from the page. Give each control a second signal besides the shadow.
-4. Wire hover, press, drag, and drop with the gesture grammar below.
+1. Set sand, stone, and groove tokens. Lock the light at the top-left.
+2. Place stones with a real gap between their outlines. Give each one closed silhouette.
+3. Build the rake from those silhouettes, using the height field in [contours.md](contours.md). Draw sand and grooves first, stones after, so a stone covers the rake.
+4. Wire hover, press, and drag. Dragging a stone recomputes the rake. The lines are what merge.
 5. Add one shared sound bus and the cue for each gesture.
 6. Honor reduced motion, contrast, focus, and a keyboard path for every drag.
 
 ## Rules
 
-- One sun. Every shadow, gradient, and blob highlight agrees with a top-left light. Positive `box-shadow` offsets sit at the bottom-right and are the dark shadow.
-- Control fill equals `--paper`. Depth is the shadow pair. Spread stays 0.
-- Corners are full circles, or a radius from the token scale. A component uses one radius.
-- Body text uses `--ink` and reaches 7:1 against `--paper`. Moss marks actions. It is not small text.
-- A state change uses two signals: the shadow, plus scale, a ring, or the moss mark.
-- Ambient motion stays slow and small. Gesture motion stays quick and small. No bounce, no overshoot past a few pixels.
-- One metaball pool and one spiral per view. Labels, icons, and text sit outside the goo filter.
-- Cues are procedural Web Audio. No audio files. One `AudioContext` for the page.
-- Hover, press, drag, and drop each have a visual and a cue. Drag holds one continuous air voice. It does not click on every move.
-- A visible mute persists. `prefers-reduced-motion: reduce` stills ambient motion and starts sound muted. Pressed and resting shadows still change.
-- Pointer drag is the rich path. Keyboard can complete the same action.
+- Orthographic. No perspective tilt, no isometric stack, no stone drawn on top of another stone.
+- Outlines of different stones stay at least `--gap` apart (72px). Only grooves enter that channel.
+- One sun. Highlight is top-left, shade is bottom-right. Spread on a shadow stays 0.
+- Sand is `--paper`. Stones are moss masses, a second material, still lit by that same sun. Derive each stone's highlight and shade from its own fill.
+- Grooves are incisions in the sand: a hairline shade offset down-right, a hairline highlight offset up-left. They are texture, not borders around the stone.
+- The nearest grooves follow the stone's silhouette. They are not circles, not a spiral, and not a field of dots.
+- Where two stones' influences meet, combine the field before drawing. The resulting groove is one curve. It does not cross its neighbor and it does not kink along a hard seam.
+- Body text sits on a stone and clears 4.5:1 against that stone. Text on sand uses `--ink` and clears 7:1 against `--paper`. Do not put text on the grooves.
+- A state change uses two signals. A lifted stone changes its shadow and its nearest grooves.
+- Hover, press, and drag each have a visual and a cue. Drag holds one air voice.
+- A visible mute persists. `prefers-reduced-motion: reduce` stills the rake's drift and starts sound muted. Pressed and resting shadows still change.
+- Pointer drag is the rich path. Keyboard can nudge the same stone.
 
 ## Surface recipe
 
-Distance is about 10% of the control diameter. Blur is about twice the distance.
+Sand is flat `--paper`. A stone is raised. Distance is about 8% of the stone's shorter side. Blur is about twice the distance.
 
 ```css
-.raised {
-  background: var(--paper);
-  color: var(--ink);
-  border-radius: 50%;
+.stone {
+  background: var(--stone);
+  color: var(--stone-ink);
   box-shadow:
-    calc(var(--dist) * -1) calc(var(--dist) * -1) var(--blur) var(--highlight),
-    var(--dist) var(--dist) var(--blur) var(--shade);
+    calc(var(--dist) * -1) calc(var(--dist) * -1) var(--blur) var(--stone-highlight),
+    var(--dist) var(--dist) var(--blur) var(--stone-shade);
 }
-.pressed {
+.stone:active {
   box-shadow:
-    inset var(--dist) var(--dist) var(--blur) var(--shade),
-    inset calc(var(--dist) * -1) calc(var(--dist) * -1) var(--blur) var(--highlight);
+    inset var(--dist) var(--dist) var(--blur) var(--stone-shade),
+    inset calc(var(--dist) * -1) calc(var(--dist) * -1) var(--blur) var(--stone-highlight);
 }
 ```
 
-Token math, the dawn and dusk palettes, type, and the contrast border are in [tokens.md](tokens.md).
+The visible edge of a stone is its real silhouette, not a rounded rectangle sitting behind an organic graphic. Token values are in [tokens.md](tokens.md). The groove and field math are in [contours.md](contours.md).
 
 ## Gesture grammar
 
 | Gesture | Visual | Sound | Timing |
 | --- | --- | --- | --- |
-| Hover in | Shadow distance +30%, scale 1.02 | Soft tick, 160ms cooldown | 220ms zen ease-out |
-| Hover out | Settle to rest | Silence | 320ms |
-| Press | Inset shadows, scale 0.985, one ripple | Clay tap | 120ms |
+| Hover in | Shadow distance +30%. Nearest grooves ease outward about 5px | Soft tick, 160ms cooldown | 220ms zen ease-out |
+| Hover out | Grooves and shadow settle | Silence | 320ms |
+| Press | Inset shadow. Nearest grooves pull in about 3px | Clay tap | 120ms |
 | Release | Return to hover or rest | Shorter, higher tap | 180ms |
-| Drag start | Cradle goes inset; stone shadow deepens | Press, then the air voice | Pointer capture |
-| Drag move | Heavy follow; a ripple every 40px; a bridge blob near a well | Air gain follows speed | Lerp 0.22 |
-| Drop accept | Stone sinks; rings pulse once | Bowl partials, ~1.4s decay | 400ms settle |
-| Drop reject | Return home with a short spring | Two close tones, 180ms | Stiffness 160, damping 26 |
+| Drag start | Stone shadow deepens once. Rake starts following | Press, then the air voice | Pointer capture |
+| Drag move | Heavy follow. Grooves reflow every frame and merge in the channel | Air gain follows speed | Lerp 0.35 |
+| Drag blocked | Stone stops at `--gap`. Grooves stay merged in the channel | A short bowl when a shared wave first forms | Separation, not overlap |
+| Release drag | Stone settles where the gap allows | Air stops. Bowl if a merge completed, otherwise the quiet pair | 400ms settle |
 
-Springs, the ring and spiral clocks, and the drag state machine are in [motion.md](motion.md).
+Details are in [motion.md](motion.md).
 
-## Geometry
-
-- Rings: 1px strokes, opacity falling toward the outside, breathe staggered so neighbors are out of phase.
-- Spiral: Archimedean, so the gap between turns stays even. Draw it once, then rotate it over 60–90s. A golden spiral only when the spiral itself is the subject, and only for about two turns.
-- Metaballs: SVG goo for a DOM cluster of fewer than 8 blobs. A canvas scalar field when the pool needs soft lighting.
+## The rake
 
 ```js
-field += (r * r) / Math.max(dx * dx + dy * dy, 0.001);
+const d = smoothMinDistance(stones, x, y, meetK);
+const outside = Math.max(0, d);
+const along = flowY + flowX * 0.08;
+const w = falloff(outside);
+const h = (1 - w) * along + w * (outside * 1.15 + along * 0.2);
 ```
 
-The shape is the set of points where `field >= 1`. Filter matrices, lighting, and performance limits are in [metaballs.md](metaballs.md).
+Draw isolines of `h`. Near a stone, `w` is 1 and the grooves are a projection of its silhouette. Far away, `w` is 0 and they are the long rake. `smoothMinDistance` is what makes two families into one wave. Full recipe, the marching-squares pass, and the groove stroke are in [contours.md](contours.md).
 
 ## Sound
 
-Resume the context inside the first pointer or key handler. Route every cue through a master gain and a compressor. Specs and a player are in [sound.md](sound.md).
+Resume the context inside the first pointer or key handler. Route every cue through a master gain and a compressor. Specs are in [sound.md](sound.md).
 
 ## Composition
 
-A view is a circle and the silence around it.
-
-- The focal circle is about 40–55% of the shorter viewport edge.
-- Satellites sit in one column, or on an arc, at least 55px from the focal circle.
-- One short line of text, then a pause, then the circle.
-- The spiral is larger than the focal circle, fainter, and shares its center.
+- The sand is the whole view. There is no card behind the garden.
+- Three to seven stones. Scatter them. Leave a channel of at least `--gap` between every pair.
+- One mass may be a grove: lighter moss, little or no text. Readable stones are darker so their type clears 4.5:1.
+- Grooves run under the whole sand and stop at each silhouette.
+- One short label lives on a stone. The sand stays unlettered except a single kicker if the view needs a name.
 
 ## Accessibility checklist
 
-- [ ] `--ink` on `--paper` is at least 7:1. A UI edge is at least 3:1, or a 1px border of `--ink` at 12% opacity is added.
-- [ ] `:focus-visible` is a 2px moss ring, 4px offset. Not a glow.
-- [ ] Toggles expose `aria-pressed` or `role="switch"`. A live region announces drop results.
-- [ ] Mute is a switch. Its state is persisted. Color is not the only cue.
-- [ ] Reduced motion: ambient clocks off, transitions at 1ms, sound starts muted.
-- [ ] `forced-colors`: remove the shadow pair and use system colors.
-- [ ] Circular controls are at least 56px.
+- [ ] `--ink` on `--paper` is at least 7:1. Text on a stone is at least 4.5:1.
+- [ ] The stone's moss fill is a second signal beside its shadow.
+- [ ] `:focus-visible` is a 2px light ring, 4px outside the silhouette.
+- [ ] Toggles expose `aria-pressed` or `role="switch"`. A live region announces a blocked drag ("Stones stay apart.").
+- [ ] Mute is a switch. Its state is persisted.
+- [ ] Reduced motion: rake drift off, transitions at 1ms, sound starts muted. Grooves still update when a stone is moved.
+- [ ] `forced-colors`: drop the shadow pair, keep a 1px solid edge on each stone.
+- [ ] Hit targets follow the silhouette and are at least 56px on the shorter side.
 
 ## Leave out
 
-- A second light direction on a single component.
-- Text or icons inside the goo filter.
-- Animating `stdDeviation`, or animating `box-shadow` on every drag frame. Move transforms. Swap shadow tokens at gesture boundaries.
+- Stones overlapping, stacked, or sharing an edge. The second reference's piled blobs are not the layout.
+- A spiral, a set of decorative circles, or a metaball as the rake.
+- Grooves drawn across a stone's interior.
+- Hard Voronoi seams (a sharp crease where two distance fields meet). Soften the join.
+- A second light direction.
+- Animating `box-shadow` on every drag frame. Swap the shadow token when the drag starts. Move the stone. Redraw grooves.
 - A new `AudioContext` per cue, or audio before a user gesture.
-- A discrete sample on each drag pixel.
-- A spiral, a full set of rings, and a blob pool all fighting in different centers. One pool, one spiral, rings around the focal circle.
+- A click sample on every pointer move.
