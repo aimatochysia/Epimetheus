@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#445244" />
+    <meta name="description" content="Epimetheus is a quiet, private kanban board that stays in the browser." />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <title>Epimetheus</title>
+    <script>
+      try {
+        var stored = localStorage.getItem("epimetheus-theme");
+        var theme = stored === "dark" || stored === "light"
+          ? stored
+          : (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.dataset.theme = theme;
+      } catch (error) {}
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

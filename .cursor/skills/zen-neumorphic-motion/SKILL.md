@@ -27,7 +27,7 @@ Ma (間) is that band. Do not fill it with another object. Sound is synthesized,
 1. Set the sand fallback, the shader's highlight and shade, and the rock colors in [tokens.md](tokens.md). Lock the light at the top-left.
 2. Lay out ghost blocks in flex or grid. Give each a `data-color` and a safe zone.
 3. Draw the garden with the shader in [engine.md](engine.md). Upload each block's center, size, and color from `getBoundingClientRect`.
-4. Wire inner controls and stone drag as in [motion.md](motion.md). A drag moves the ghost block. The next draw reads the new rect, so the rock and the ripples move together.
+4. Wire inner controls and stone drag as in [motion.md](motion.md). A drag moves the block. The ripple field waits. When the block has stopped, one draw reads the settled rectangles.
 5. Add one shared sound bus and the cue for each gesture.
 6. Honor reduced motion, contrast, focus, and a keyboard path for every drag.
 
@@ -47,7 +47,7 @@ Ma (間) is that band. Do not fill it with another object. Sound is synthesized,
 - Controls inside the safe zone are inset into the stone, or raised by a very small neumorphic pair. They do not use a high-contrast border.
 - Body text on a stone clears 4.5:1 against `data-color`. If the reference hue is too light, darken that hex in the same hue until it passes. Text on sand uses `--ink` and clears 7:1 against the sand fallback.
 - Hover, press, and drag each have a visual and a cue. Drag holds one air voice.
-- A visible mute persists. `prefers-reduced-motion: reduce` drops inner transitions to 1ms and starts sound muted. The garden still redraws when a block moves.
+- A visible mute persists. `prefers-reduced-motion: reduce` drops inner transitions to 1ms and starts sound muted. The garden redraws once a block has stopped, not on each frame of the move.
 - Pointer drag is the rich path. Keyboard can nudge the same block.
 
 ## Gesture grammar
@@ -57,10 +57,10 @@ Ma (間) is that band. Do not fill it with another object. Sound is synthesized,
 | Hover a control | Inset control darkens slightly | Soft tick, 160ms cooldown | 200ms |
 | Press a control | Inset shadow deepens | Clay tap | 120ms |
 | Release | Resting inset | Shorter, higher tap | 180ms |
-| Drag start | Block follows the pointer. Shader redraws from the new rect | Press, then the air voice | Pointer capture |
-| Drag move | Heavy follow. Ripples conform to the moving outline and assimilate in the channel | Air gain follows speed | Lerp 0.35 |
+| Drag start | Block follows the pointer. Ripples hold the resting field | Press, then the air voice | Pointer capture |
+| Drag move | Heavy follow. The sand does not redraw | Air gain follows speed | Lerp 0.35 |
 | Drag blocked | Block stops while one sand ripple remains between the stones | A short bowl the first time a channel is shared | Separation |
-| Release drag | Block rests where the channel allows | Air stops | 400ms settle |
+| Release drag | Block rests where the channel allows. One draw reads the settled rectangles | Air stops | 400ms settle |
 
 Details are in [motion.md](motion.md). The field, the lighting, and the uniforms are in [engine.md](engine.md).
 

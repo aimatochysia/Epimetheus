@@ -59,7 +59,7 @@ Uniforms, one entry per block, capped at a compile-time count (the reference use
 - `u_colors[i]`: `data-color` as linear RGB, 0–1.
 - `u_numBlocks`.
 
-Draw once after layout, on resize, and on every frame a block is moving. An idle garden does not animate.
+Draw once after layout, on resize, and once a moving block has settled. An idle garden does not animate. Do not upload bounds on each drag frame.
 
 ## The rock
 
